@@ -8,14 +8,16 @@ import (
 )
 
 type HttpParser struct {
-	method  string
-	host    string
-	port    string
-	path    string
-	version string
+	Method  string
+	Host    string
+	Port    string
+	Path    string
+	Version string
+	BodyLen int
 }
 
 const CLRF = string("\r\n")
+const ENDS = string("\r\n\r\n")
 
 var (
 	// Parse `GET /url?a=1 HTTP/1.1`
@@ -76,6 +78,7 @@ func Parser(header []byte) (*HttpParser, error) {
 	}
 
 	header_map := HeaderMap(msg)
+	bodyLen := strings.Index(msg, ENDS)
 
 	if method == "CONNECT" {
 		re := RegConn.FindAllStringSubmatch(msg, -1)
@@ -89,11 +92,12 @@ func Parser(header []byte) (*HttpParser, error) {
 
 		if host != "" && port != "" && version != "" {
 			return &HttpParser{
-				method:  method,
-				host:    host,
-				port:    port,
-				path:    "",
-				version: version}, nil
+				Method:  method,
+				Host:    host,
+				Port:    port,
+				Path:    "",
+				Version: version,
+				BodyLen: bodyLen}, nil
 		}
 	} else {
 		re := RegNormal.FindAllStringSubmatch(msg, -1)
@@ -129,11 +133,12 @@ func Parser(header []byte) (*HttpParser, error) {
 
 		if path != "" && host != "" && version != "" {
 			return &HttpParser{
-				method:  method,
-				host:    host,
-				port:    port,
-				path:    path,
-				version: version}, nil
+				Method:  method,
+				Host:    host,
+				Port:    port,
+				Path:    path,
+				Version: version,
+				BodyLen: bodyLen}, nil
 		}
 	}
 
