@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"github.com/Mr8/goproxy/utils"
 	"regexp"
 	"strings"
@@ -9,7 +10,7 @@ import (
 var (
 	RegProxy      = regexp.MustCompile(`Proxy\-Connection\:.+\r\n`)
 	RegKeepAlived = regexp.MustCompile(`Keep\-Alive\:.+\r\n`)
-	RegHttpHost   = regexp.MustCompile(`http\:\/\/[^\/]+/`)
+	RegHttpHost   = regexp.MustCompile(`(?i:http)\:\/\/[^\/]+/`)
 )
 
 // Method which used to transfer
@@ -36,9 +37,10 @@ func TransferHTTP(requests []byte, hp *utils.HttpParser) ([]byte, error) {
 	header = strings.Replace(header, "\r\n", "\r\nConnection: close\r\n", 1)
 
 	lenHeaderTran := len(header)
-	retBuf := make([]byte, lenReq-lenHeaderOri+lenHeaderTran)
+	// retBuf := make([]byte, lenReq-lenHeaderOri+lenHeaderTran)
 
-	copy(retBuf, header) //, requests[posBody:])
-	copy(retBuf[len(header):], requests[posBody:])
-	return retBuf, nil
+	retBuf := bytes.NewBuffer([]byte{})
+	retBuf.WriteString(header)
+	retBuf.Write(requests[posBody:])
+	return retBuf.Next(lenReq - lenHeaderOri + lenHeaderTran), nil
 }
